@@ -75,6 +75,7 @@ jobs:
         run: |
           {
           echo "===== RECURSOS ====="
+          mkdir -p build out
           BT=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
           echo "BT=$BT"
           echo "--- res/ ---"
