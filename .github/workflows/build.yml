@@ -1,0 +1,169 @@
+name: build
+on:
+  workflow_dispatch:
+  push:
+    paths: ['src/**', 'res/**', 'AndroidManifest.xml', '.github/workflows/build.yml']
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: localizar SDK
+        id: sdk
+        run: |
+          if [ -z "$ANDROID_HOME" ]; then
+            export ANDROID_HOME=$ANDROID_SDK_ROOT
+          fi
+          if [ -z "$ANDROID_HOME" ]; then
+            export ANDROID_HOME=/usr/local/lib/android/sdk
+          fi
+          JAR=$(ls $ANDROID_HOME/platforms/*/android.jar 2>/dev/null | sort | tail -1)
+          echo "android.jar = $JAR"
+          echo "jar=$JAR" >> $GITHUB_OUTPUT
+          ls $ANDROID_HOME/build-tools/ | sort | tail -3
+
+      - name: gerar icone
+        run: |
+          python3 - <<'PY'
+          import zlib, struct, os
+
+          def png(path, size):
+              # fundo creme quente, lente terracota, ponto central
+              bg   = (253, 251, 247, 255)
+              lens = (196, 113,  79, 255)
+              ink  = ( 44,  39,  35, 255)
+              px = [[bg for _ in range(size)] for _ in range(size)]
+              c = (size - 1) / 2.0
+              r_out = size * 0.46
+              r_in  = size * 0.20
+              r_dot = size * 0.075
+              r_corner = size * 0.22
+              for y in range(size):
+                  for x in range(size):
+                      # cantos arredondados
+                      cx = min(max(x, r_corner), size - 1 - r_corner)
+                      cy = min(max(y, r_corner), size - 1 - r_corner)
+                      if (x - cx) ** 2 + (y - cy) ** 2 > r_corner ** 2:
+                          px[y][x] = (0, 0, 0, 0)
+                          continue
+                      d2 = (x - c) ** 2 + (y - c) ** 2
+                      if d2 <= r_dot ** 2:
+                          px[y][x] = ink
+                      elif d2 <= r_in ** 2:
+                          px[y][x] = bg
+                      elif d2 <= r_out ** 2:
+                          px[y][x] = lens
+              raw = b''.join(b'\x00' + b''.join(struct.pack('4B', *px[y][x]) for x in range(size)) for y in range(size))
+              def chunk(t, d):
+                  return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+              ihdr = struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0)
+              data = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) + chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b'')
+              os.makedirs(os.path.dirname(path), exist_ok=True)
+              open(path, 'wb').write(data)
+              print(f"{path} {size}x{size} {len(data)} bytes")
+
+          png('res/mipmap-hdpi/ic_launcher.png', 72)
+          png('res/mipmap-xxhdpi/ic_launcher.png', 144)
+          PY
+          ls -la res/mipmap-hdpi/ res/mipmap-xxhdpi/
+
+      - name: compilar recursos
+        run: |
+          BT=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
+          echo "build-tools: $BT"
+          mkdir -p build
+          $ANDROID_HOME/build-tools/$BT/aapt2 compile --dir res -o build/res.zip 2>&1 | tail -5
+          $ANDROID_HOME/build-tools/$BT/aapt2 link \
+            -I ${{ steps.sdk.outputs.jar }} \
+            --manifest AndroidManifest.xml \
+            -o build/link.apk \
+            --target-sdk-version 34 \
+            --min-sdk-version 26 \
+            build/res.zip 2>&1 | tail -20
+          ls -la build/
+
+      - name: javac
+        run: |
+          set +e
+          JAR=${{ steps.sdk.outputs.jar }}
+          mkdir -p build/obj
+          javac -source 8 -target 8 -bootclasspath "$JAR" -classpath "$JAR" \
+            -d build/obj $(find src -name '*.java') 2>&1 | tee build/javac.log | tail -30
+          echo "exit=${PIPESTATUS[0]}"
+          # ERRO AQUI E FATAL: javac pode emitir classes parciais e o d8
+          # gerar um dex incompleto que instala e quebra em runtime.
+          if grep -q "error:" build/javac.log; then
+            echo "FALHA: javac reportou erros"
+            exit 1
+          fi
+          find build/obj -name '*.class' | wc -l
+
+      - name: d8
+        run: |
+          BT=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
+          CLASSES=$(find build/obj -name '*.class')
+          echo "classes: $(echo "$CLASSES" | wc -l)"
+          $ANDROID_HOME/build-tools/$BT/d8 --lib ${{ steps.sdk.outputs.jar }} \
+            --min-api 26 --output build/ $CLASSES 2>&1 | tail -10
+          ls -la build/classes.dex
+
+      - name: empacotar
+        run: |
+          BT=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
+          cp build/link.apk build/unaligned.apk
+          cd build && zip -q -j unaligned.apk classes.dex && cd ..
+          $ANDROID_HOME/build-tools/$BT/zipalign -f -p 4 build/unaligned.apk build/campro.apk
+          ls -la build/campro.apk
+
+      - name: assinar
+        run: |
+          BT=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
+          keytool -genkeypair -v -keystore build/campro.keystore \
+            -alias campro -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass campro123 -keypass campro123 \
+            -dname "CN=CamPro, OU=dev, O=thiairo, L=SP, S=SP, C=BR" 2>&1 | tail -2
+          $ANDROID_HOME/build-tools/$BT/apksigner sign \
+            --ks build/campro.keystore --ks-key-alias campro \
+            --ks-pass pass:campro123 --key-pass pass:campro123 \
+            --out build/campro-signed.apk build/campro.apk
+          $ANDROID_HOME/build-tools/$BT/apksigner verify build/campro-signed.apk 2>&1 | tail -5
+
+      - name: verificar conteudo
+        run: |
+          BT=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
+          APK=build/campro-signed.apk
+          echo "===== VERIFICACAO ====="
+          echo "tamanho: $(stat -c%s $APK) bytes"
+          echo "--- entradas ---"
+          unzip -l $APK | grep -E "classes.dex|AndroidManifest|res/|META-INF" | head -20
+          echo "--- integridade ---"
+          unzip -t $APK | tail -1
+          echo "--- dex presente? ---"
+          unzip -l $APK | grep -c "classes.dex" || echo "0 <<< FATAL"
+          echo "--- manifest (strings) ---"
+          $ANDROID_HOME/build-tools/$BT/aapt2 dump badging $APK 2>/dev/null | head -8
+          echo "--- strings no dex ---"
+          unzip -p $APK classes.dex | strings | grep -E "com/thiairo/campro/MainActivity|GLRenderer|ImageProcessor" | sort -u | head -5
+          echo "--- segredos? ---"
+          unzip -p $APK classes.dex | strings | grep -cE "^(sk-|ghp_|AIza)" || echo "0 (nenhum)"
+          echo "===== FIM ====="
+
+      - name: publicar
+        if: always()
+        run: |
+          mkdir -p out
+          if [ -f build/campro-signed.apk ]; then
+            cp build/campro-signed.apk out/campro.apk
+            base64 -w0 build/campro-signed.apk > out/campro.apk.b64
+            echo "apk: $(stat -c%s build/campro-signed.apk) bytes"
+          fi
+          [ -f build/javac.log ] && cp build/javac.log out/javac.log
+          git config user.name bot
+          git config user.email b@b.local
+          git add -f out build/campro-signed.apk 2>/dev/null
+          git commit -m "build $(date -u +%F_%T)" 2>&1 | tail -2
+          git push 2>&1 | tail -2
