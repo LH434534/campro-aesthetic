@@ -111,11 +111,40 @@ jobs:
 
       - name: empacotar
         run: |
+          {
+          echo "===== EMPACOTAR ====="
+          echo "--- build/ antes ---"
+          ls -la build/ 2>&1
+          echo "--- build-tools ---"
           BT=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
-          cp build/link.apk build/unaligned.apk
-          cd build && zip -q -j unaligned.apk classes.dex && cd ..
-          $ANDROID_HOME/build-tools/$BT/zipalign -f -p 4 build/unaligned.apk build/campro.apk
-          ls -la build/campro.apk
+          echo "BT=$BT"
+          echo "--- copia base ---"
+          cp build/link.apk build/unaligned.apk 2>&1
+          echo "cp exit=$?"
+          echo "--- injetando dex com python ---"
+          python3 - <<'PY'
+          import zipfile, os
+          print("classes.dex existe:", os.path.exists('build/classes.dex'))
+          if os.path.exists('build/classes.dex'):
+              print("tamanho dex:", os.path.getsize('build/classes.dex'))
+          with zipfile.ZipFile('build/unaligned.apk', 'a', zipfile.ZIP_DEFLATED) as z:
+              z.write('build/classes.dex', 'classes.dex')
+          print("entradas agora:", len(zipfile.ZipFile('build/unaligned.apk').namelist()))
+          PY
+          echo "py exit=$?"
+          echo "--- zipalign ---"
+          $ANDROID_HOME/build-tools/$BT/zipalign -f -p 4 build/unaligned.apk build/campro.apk 2>&1
+          echo "zipalign exit=$?"
+          if [ ! -f build/campro.apk ]; then
+            echo "zipalign nao gerou saida; usando unaligned"
+            cp build/unaligned.apk build/campro.apk
+          fi
+          echo "--- resultado ---"
+          ls -la build/campro.apk 2>&1
+          echo "===== FIM ====="
+          } > out/pack.log 2>&1
+          cat out/pack.log
+          if [ ! -f build/campro.apk ]; then exit 1; fi
 
       - name: assinar
         run: |
@@ -159,7 +188,8 @@ jobs:
             base64 -w0 build/campro-signed.apk > out/campro.apk.b64
             echo "apk: $(stat -c%s build/campro-signed.apk) bytes"
           fi
-          [ -f build/javac.log ] && cp build/javac.log out/javac.log
+          [ -f build/javac.log ] && cp build/javac.log out/javac.log || true
+          [ -f out/pack.log ] && cp out/pack.log out/pack.log || true
           git config user.name bot || true
           git config user.email b@b.local || true
           git add -f out 2>/dev/null || true
