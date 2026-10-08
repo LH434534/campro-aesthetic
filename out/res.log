@@ -1,0 +1,8 @@
+===== RECURSOS =====
+BT=37.0.0
+--- res/ ---
+res/mipmap-hdpi/ic_launcher.png
+res/mipmap-xxhdpi/ic_launcher.png
+res/values/styles.xml
+--- aapt2 compile ---
+build/res.zip: error: No such file or directory.
