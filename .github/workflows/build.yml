@@ -73,18 +73,30 @@ jobs:
 
       - name: compilar recursos
         run: |
+          {
+          echo "===== RECURSOS ====="
           BT=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -1)
-          echo "build-tools: $BT"
-          mkdir -p build
-          $ANDROID_HOME/build-tools/$BT/aapt2 compile --dir res -o build/res.zip 2>&1 | tail -5
+          echo "BT=$BT"
+          echo "--- res/ ---"
+          find res -type f | sort
+          echo "--- aapt2 compile ---"
+          $ANDROID_HOME/build-tools/$BT/aapt2 compile --dir res -o build/res.zip
+          echo "compile exit=$?"
+          echo "--- aapt2 link ---"
           $ANDROID_HOME/build-tools/$BT/aapt2 link \
             -I ${{ steps.sdk.outputs.jar }} \
             --manifest AndroidManifest.xml \
             -o build/link.apk \
             --target-sdk-version 34 \
             --min-sdk-version 26 \
-            build/res.zip 2>&1 | tail -20
+            build/res.zip
+          echo "link exit=$?"
+          echo "--- resultado ---"
           ls -la build/
+          echo "===== FIM ====="
+          } > out/res.log 2>&1
+          cat out/res.log
+          if [ ! -f build/link.apk ]; then exit 1; fi
 
       - name: javac
         run: |
