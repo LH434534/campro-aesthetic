@@ -522,14 +522,14 @@ public class MainActivity extends Activity implements CameraEngine.Listener {
 
     android.graphics.drawable.Drawable fundoSuperior() {
         ShapeDrawable d = new ShapeDrawable(new RoundRectShape(
-                new float[] { 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 0, 0, 0, 0 }, null, null));
+                new float[] { 0, 0, 0, 0, 16, 16, 16, 16 }, null, null));
         d.getPaint().setShader(new LinearGradient(0, 0, 0, dp(90), 0xE6FDFBF7, 0x00FDFBF7, Shader.TileMode.CLAMP));
         return d;
     }
 
     android.graphics.drawable.Drawable fundoInferior() {
         ShapeDrawable d = new ShapeDrawable(new RoundRectShape(
-                new float[] { 22, 22, 22, 22, 22, 22, 0, 0, 0, 0, 22, 22, 22, 22 }, null, null));
+                new float[] { 22, 22, 22, 22, 0, 0, 0, 0 }, null, null));
         d.getPaint().setShader(new LinearGradient(0, 0, 0, dp(260), 0x00FDFBF7, 0xF2FDFBF7, Shader.TileMode.CLAMP));
         return d;
     }
