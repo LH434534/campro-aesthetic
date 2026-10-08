@@ -56,6 +56,9 @@ public class CameraEngine {
 
     public final Caps caps = new Caps();
 
+    private static final CameraCaptureSession.CaptureCallback SEM_RETORNO =
+        new CameraCaptureSession.CaptureCallback() { };
+
     private final Context ctx;
     private final Listener l;
     private CameraDevice device;
@@ -261,7 +264,7 @@ public class CameraEngine {
             b.addTarget(leitorJpeg.getSurface());
             if (alvoPreview != null) b.addTarget(alvoPreview);
             b.set(CaptureRequest.JPEG_ORIENTATION, 0);
-            sessao.capture(b.build(), null, h);
+            sessao.capture(b.build(), SEM_RETORNO, h);
         } catch (CameraAccessException e) {
             falhar("Captura falhou: " + e.getMessage());
         } catch (Exception e) {
@@ -279,7 +282,7 @@ public class CameraEngine {
             if (alvoPreview != null) b.addTarget(alvoPreview);
             b.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
             b.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-            sessao.capture(b.build(), null, h);
+            sessao.capture(b.build(), SEM_RETORNO, h);
         } catch (Exception e) { /* trigger opcional */ }
         repetir();
     }
