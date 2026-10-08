@@ -1,6 +1,6 @@
-src/com/thiairo/campro/CameraEngine.java:282: error: incompatible types: int cannot be converted to Handler
-            sessao.capture(b.build(), null, h);
-                                            ^
+src/com/thiairo/campro/CameraEngine.java:285: error: incompatible types: int cannot be converted to Handler
+            sessao.capture(b.build(), SEM_RETORNO, h);
+                                                   ^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
