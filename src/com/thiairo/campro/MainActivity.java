@@ -154,8 +154,18 @@ public class MainActivity extends Activity implements CameraEngine.Listener {
         lb.gravity = Gravity.BOTTOM;
         raiz.addView(painelInferior, lb);
 
-        gl.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { /* toque tratado em GradeView */ }
+        gl.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, android.view.MotionEvent e) {
+                if (e.getActionMasked() != android.view.MotionEvent.ACTION_UP) return true;
+                final int x = (int) e.getX(), y = (int) e.getY();
+                retFoco.setVisibility(View.VISIBLE);
+                ((FocoView) retFoco).mostrar(x, y);
+                retFoco.postDelayed(new Runnable() {
+                    public void run() { retFoco.setVisibility(View.GONE); }
+                }, 1400);
+                if (cam != null) cam.focarEm(x, y, gl.getWidth(), gl.getHeight());
+                return true;
+            }
         });
     }
 
@@ -552,6 +562,7 @@ public class MainActivity extends Activity implements CameraEngine.Listener {
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         float x = -1, y = -1;
         FocoView(android.content.Context c) { super(c); p.setColor(0xFFFFFFFF); p.setStrokeWidth(2f); p.setStyle(Paint.Style.STROKE); }
+        void mostrar(int px, int py) { x = px; y = py; invalidate(); }
         protected void onDraw(Canvas c) {
             if (x < 0) return;
             float r = dp(30);
