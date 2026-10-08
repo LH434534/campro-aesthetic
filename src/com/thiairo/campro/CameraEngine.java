@@ -272,8 +272,8 @@ public class CameraEngine {
         }
     }
 
-    public void focarEm(int x, int y, int w, int h) {
-        int lado = Math.max(60, Math.min(w, h) / 6);
+    public void focarEm(int x, int y, int largura, int altura) {
+        int lado = Math.max(60, Math.min(largura, altura) / 6);
         areaFoco = new MeteringRectangle(
                 Math.max(0, x - lado / 2), Math.max(0, y - lado / 2),
                 lado, lado, MeteringRectangle.METERING_WEIGHT_MAX - 1);
