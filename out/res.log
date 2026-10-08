@@ -5,4 +5,6 @@ res/mipmap-hdpi/ic_launcher.png
 res/mipmap-xxhdpi/ic_launcher.png
 res/values/styles.xml
 --- aapt2 compile ---
-build/res.zip: error: No such file or directory.
+compile exit=0
+--- aapt2 link ---
+AndroidManifest.xml:9: error: cannot define both android:name and android:glEsVersion in <uses-feature>.
