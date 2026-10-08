@@ -1,0 +1,13 @@
+===== EMPACOTAR =====
+--- build/ antes ---
+total 72
+drwxr-xr-x 3 runner runner  4096 Oct  8 22:53 .
+drwxr-xr-x 8 runner runner  4096 Oct  8 22:53 ..
+-rw-r--r-- 1 runner runner 50448 Oct  8 22:53 classes.dex
+-rw-r--r-- 1 runner runner   110 Oct  8 22:53 javac.log
+drwxr-xr-x 3 runner runner  4096 Oct  8 22:53 obj
+-rw-r--r-- 1 runner runner  2332 Oct  8 22:53 res.zip
+--- build-tools ---
+BT=37.0.0
+--- copia base ---
+cp: cannot stat 'build/link.apk': No such file or directory
