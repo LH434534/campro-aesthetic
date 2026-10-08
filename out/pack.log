@@ -1,13 +1,24 @@
 ===== EMPACOTAR =====
 --- build/ antes ---
-total 72
-drwxr-xr-x 3 runner runner  4096 Oct  8 22:53 .
-drwxr-xr-x 8 runner runner  4096 Oct  8 22:53 ..
--rw-r--r-- 1 runner runner 50448 Oct  8 22:53 classes.dex
--rw-r--r-- 1 runner runner   110 Oct  8 22:53 javac.log
-drwxr-xr-x 3 runner runner  4096 Oct  8 22:53 obj
--rw-r--r-- 1 runner runner  2332 Oct  8 22:53 res.zip
+total 76
+drwxr-xr-x 3 runner runner  4096 Oct  8 23:02 .
+drwxr-xr-x 8 runner runner  4096 Oct  8 23:02 ..
+-rw-r--r-- 1 runner runner 50448 Oct  8 23:02 classes.dex
+-rw-r--r-- 1 runner runner   110 Oct  8 23:02 javac.log
+-rw-r--r-- 1 runner runner  3461 Oct  8 23:02 link.apk
+drwxr-xr-x 3 runner runner  4096 Oct  8 23:02 obj
+-rw-r--r-- 1 runner runner  2332 Oct  8 23:02 res.zip
 --- build-tools ---
 BT=37.0.0
 --- copia base ---
-cp: cannot stat 'build/link.apk': No such file or directory
+cp exit=0
+--- injetando dex com python ---
+classes.dex existe: True
+tamanho dex: 50448
+entradas agora: 5
+py exit=0
+--- zipalign ---
+zipalign exit=0
+--- resultado ---
+-rw-r--r-- 1 runner runner 28439 Oct  8 23:02 build/campro.apk
+===== FIM =====

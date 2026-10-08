@@ -7,4 +7,11 @@ res/values/styles.xml
 --- aapt2 compile ---
 compile exit=0
 --- aapt2 link ---
-AndroidManifest.xml:9: error: cannot define both android:name and android:glEsVersion in <uses-feature>.
+link exit=0
+--- resultado ---
+total 16
+drwxr-xr-x 2 runner runner 4096 Oct  8 23:02 .
+drwxr-xr-x 8 runner runner 4096 Oct  8 23:02 ..
+-rw-r--r-- 1 runner runner 3461 Oct  8 23:02 link.apk
+-rw-r--r-- 1 runner runner 2332 Oct  8 23:02 res.zip
+===== FIM =====
