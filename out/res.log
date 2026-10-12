@@ -9,10 +9,9 @@ compile exit=0
 --- aapt2 link ---
 link exit=0
 --- resultado ---
-total 56
-drwxr-xr-x 2 runner runner  4096 Oct 12 12:01 .
-drwxr-xr-x 8 runner runner  4096 Oct 12 12:01 ..
--rw-r--r-- 1 runner runner 37425 Oct 12 12:01 campro-signed.apk
--rw-r--r-- 1 runner runner  3461 Oct 12 12:01 link.apk
--rw-r--r-- 1 runner runner  2332 Oct 12 12:01 res.zip
+total 16
+drwxr-xr-x 2 runner runner 4096 Oct  8 23:02 .
+drwxr-xr-x 8 runner runner 4096 Oct  8 23:02 ..
+-rw-r--r-- 1 runner runner 3461 Oct  8 23:02 link.apk
+-rw-r--r-- 1 runner runner 2332 Oct  8 23:02 res.zip
 ===== FIM =====
