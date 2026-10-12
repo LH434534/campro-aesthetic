@@ -596,7 +596,21 @@ public class MainActivity extends Activity implements CameraEngine.Listener {
     }
 
     @Override
-    protected void onResume() { super.onResume(); if (gl != null) gl.onResume(); }
+    protected void onResume() {
+        super.onResume();
+        if (gl != null) gl.onResume();
+        if (cam == null && (Build.VERSION.SDK_INT < 23
+                || checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)) {
+            abrirCamera();
+        }
+    }
     @Override
-    protected void onPause() { super.onPause(); if (gl != null) gl.onPause(); if (cam != null) cam.fechar(); }
+    protected void onPause() {
+        super.onPause();
+        if (gl != null) gl.onPause();
+        if (cam != null) {
+            cam.fechar();
+            cam = null;
+        }
+    }
 }
